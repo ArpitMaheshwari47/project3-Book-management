@@ -12,7 +12,7 @@ const Authentication = async function (req, res, next) {
           .status(400)
           .send({ status: false, msg: "Token must be present" });
   
-      jwt.verify(token, Project2, (error, response) => {
+      jwt.verify(token, "project3", (error, response) => {
         if (error)
           return res.status(401).send({ status: false, msg: "Token is invalid" });
         next();

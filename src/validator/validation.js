@@ -19,7 +19,7 @@ const validationForUser = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Title is required" });
-    else if (validator.trim(title) == 0)
+    else if (validator.trim(title)==0)
       return res
         .status(400)
         .send({ status: false, message: "Title should not be empty" });
@@ -34,7 +34,7 @@ const validationForUser = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Name is required" });
-    else if (typeof name !== "string" || !validator.isAlpha(name))
+    else if ( !validator.isAlpha(name))
       return res
         .status(400)
         .send({ status: false, message: "Name is in wrong format" });
