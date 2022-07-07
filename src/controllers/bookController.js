@@ -1,5 +1,8 @@
 const bookModel = require("../models/bookModel");
 const moment = require("moment");
+const mongoose = require("mongoose")
+const userModel = require("../models/userModel");
+const ObjectId = mongoose.Types.ObjectId;
 
 const registerBook = async function (req, res) {
   try {
@@ -7,6 +10,12 @@ const registerBook = async function (req, res) {
     const releasedAt = moment(body.releasedAt).format("YYYY-MM-DD");
     if (!moment(releasedAt).isValid())
       return res.status(400).send({ status: false, message: "Invalid input" });
+
+    const user = await userModel.findById(body.userId);
+    if (!user)
+      return res
+        .status(400)
+        .send({ status: false, message: "User not exists" });
 
     const book = await bookModel.create(body);
     const newBook = { ...book.toJSON(), releasedAt };
@@ -22,7 +31,15 @@ const getBook = async function (req, res) {
   try {
     let { userId, category, subcategory } = req.query;
     let params = { isDeleted: false };
-    if (userId) params.userId = userId;
+    if (userId && !ObjectId.isValid(userId)) {
+      return res
+        .status(400)
+        .send({ status: false, msg: "UserId is not valid" });
+    }
+    //  else {
+    //   params.userId = userId;
+    // }
+
     if (category) params.category = category;
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
@@ -30,7 +47,14 @@ const getBook = async function (req, res) {
     }
     let book = await bookModel
       .find(params)
-      .select({ ISBN: 0, subcategory: 0 ,__v : 0,isDeleted : 0 , createdAt :0 ,updatedAt : 0 })
+      .select({
+        ISBN: 0,
+        subcategory: 0,
+        __v: 0,
+        isDeleted: 0,
+        createdAt: 0,
+        updatedAt: 0,
+      })
       .sort({ title: 1 });
 
     if (book.length == 0) {
