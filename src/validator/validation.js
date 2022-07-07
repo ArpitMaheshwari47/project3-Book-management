@@ -16,6 +16,11 @@ const isValidValue = function (value) {
   else return true;
 };
 
+const azValid = function (value) {
+  if (!/^[ a-z ]+$/i.test(value)) return false
+  else return true;
+}
+
 const validationForUser = async function (req, res, next) {
   try {
     let data = req.body;
@@ -44,7 +49,7 @@ const validationForUser = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Name is required" });
-    else if (!isValidValue(name) || !/^[ a-z ]+$/i.test(name))
+    else if (!isValidValue(name) || !azValid(name))
       return res
         .status(400)
         .send({ status: false, msg: "Name is in wrong format" });
@@ -107,7 +112,7 @@ const validationForUser = async function (req, res, next) {
     else if (
       !address.city ||
       !isValidValue(address.city) ||
-      !/^[ a-z ]+$/i.test(address.city)
+      !azValid(address.city)
     )
       return res.status(400).send({
         status: false,
@@ -187,11 +192,15 @@ const validationForBook = async function (req, res, next) {
     else if (!/^(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/.test(ISBN))
       return res.status(400).send({ status: false, msg: "Invalid ISBN" });
 
+    const getISBN = await bookModel.findOne({ ISBN })
+    if (getISBN)
+      return res.status(400).send({ status: false, msg: "ISBN Already exists" });
+
     if (!category)
       return res
         .status(400)
         .send({ status: false, msg: "category is required" });
-    else if (!isValidValue(category) || !/^[ a-z ]+$/i.test(category))
+    else if (!isValidValue(category) || !azValid(category))
       return res
         .status(400)
         .send({ status: false, msg: "Category is in wrong format" });
@@ -200,7 +209,7 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, msg: "Subcategory is required" });
-    else if (subcategory.length == 0 || !/^[ a-z ]+$/i.test(category))
+    else if (subcategory.length == 0 || !azValid(subcategory))
       return res
         .status(400)
         .send({ status: false, msg: "Subcategory is in wrong format" });
@@ -218,5 +227,48 @@ const validationForBook = async function (req, res, next) {
   next();
 };
 
+const validationForUpdatedBook = async function (req, res, next) {
+  try {
+    let data = req.body;
+    let {
+      title,
+      excerpt,
+      releasedAt,
+      ISBN,
 
-module.exports = { validationForUser, validationForBook };
+    } = data;
+
+    if (!isValid(data))
+      return res
+        .status(400)
+        .send({ status: false, message: "Missing Parameters" });
+
+
+    if (title && !isValidValue(title))
+      return res
+        .status(400)
+        .send({ status: false, message: "Title is wrong format" });
+    if (excerpt && !isValidValue(excerpt))
+      return res
+        .status(400)
+        .send({ status: false, message: "excerpt is in wrong format" });
+    if (releasedAt && !isValidValue(releasedAt))
+      return res
+        .status(400)
+        .send({ status: false, message: "releasedAt is in wrong format" });
+    if (ISBN && !isValidValue(ISBN))
+      return res
+        .status(400)
+        .send({ status: false, message: "ISBN is in wrong format" });
+
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+  next();
+};
+
+
+
+
+
+module.exports = { validationForUser, validationForBook, isValid, isValidValue ,validationForUpdatedBook};

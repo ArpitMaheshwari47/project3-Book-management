@@ -25,6 +25,17 @@ router.get(
   middlewares.Authentication,
   bookController.getBook
 );
+router.get(
+  "/books/:bookId",
+  middlewares.Authentication,
+  bookController.getBooksByParams
+);
+router.put(
+  "/books/:bookId",
+  middlewares.Authentication,
+  validation.validationForUpdatedBook,
+  bookController.updateBooks
+);
 
 
 module.exports = router;

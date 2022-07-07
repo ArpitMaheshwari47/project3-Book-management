@@ -36,7 +36,7 @@ const loginUser = async function (req, res) {
       },
       "project3"
     );
-
+      
     res.status(200).send({ status: true, message: "Success", data: token });
   } catch (error) {
     res.status(500).send({ status: false, message: error.message });
