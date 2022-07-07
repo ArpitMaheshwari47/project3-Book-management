@@ -30,7 +30,7 @@ const getBook = async function (req, res) {
     }
     let book = await bookModel
       .find(params)
-      .select({ ISBN: 0, subcategory: 0 })
+      .select({ ISBN: 0, subcategory: 0 ,__v : 0,isDeleted : 0 , createdAt :0 ,updatedAt : 0 })
       .sort({ title: 1 });
 
     if (book.length == 0) {
@@ -38,7 +38,7 @@ const getBook = async function (req, res) {
     }
     return res
       .status(200)
-      .send({ status: true, message: "Success", data: book });
+      .send({ status: true, message: "Books List", data: book });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
