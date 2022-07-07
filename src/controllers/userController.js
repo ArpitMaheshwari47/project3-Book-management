@@ -32,7 +32,7 @@ const loginUser = async function (req, res) {
       {
         userId: user._id.toString(),
         iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 60,
+        exp: Math.floor(Date.now() / 1000) + 10*60*60,
       },
       "project3"
     );

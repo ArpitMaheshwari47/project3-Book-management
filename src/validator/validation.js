@@ -204,7 +204,7 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, msg: "Subcategory is in wrong format" });
-    else if (isNaN(reviews))
+    else if (reviews && isNaN(reviews))
       return res
         .status(400)
         .send({ status: false, msg: "Reviews is in wrong format" });

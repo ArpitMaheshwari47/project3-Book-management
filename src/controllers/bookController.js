@@ -1,6 +1,6 @@
 const bookModel = require("../models/bookModel");
 const moment = require("moment");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const userModel = require("../models/userModel");
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -36,10 +36,6 @@ const getBook = async function (req, res) {
         .status(400)
         .send({ status: false, msg: "UserId is not valid" });
     }
-    //  else {
-    //   params.userId = userId;
-    // }
-
     if (category) params.category = category;
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
@@ -68,4 +64,5 @@ const getBook = async function (req, res) {
   }
 };
 
-module.exports = { registerBook, getBook };
+
+module.exports = { registerBook, getBook};
