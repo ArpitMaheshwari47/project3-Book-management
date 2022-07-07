@@ -1,18 +1,29 @@
 const bookModel = require("../models/bookModel");
 const moment = require("moment");
+const mongoose = require("mongoose")
+const userModel = require("../models/userModel");
+const ObjectId = mongoose.Types.ObjectId;
+const { isValid, isValidValue } = require("../validator/validation")
 
 const registerBook = async function (req, res) {
   try {
     let body = req.body;
-    const releasedAt = moment(body.releasedAt).format("YYYY-MM-DD");
-    if (!moment(releasedAt).isValid())
-      return res.status(400).send({ status: false, message: "Invalid input" });
+    // const releasedAt = moment(body.releasedAt).format("YYYY-MM-DD");
+    // if (!moment(releasedAt).isValid())
+    //   return res.status(400).send({ status: false, message: "Invalid input" });
+
+    const user = await userModel.findById(body.userId);
+    if (!user)
+      return res
+        .status(400)
+        .send({ status: false, message: "User not exists" });
 
     const book = await bookModel.create(body);
-    const newBook = { ...book.toJSON(), releasedAt };
+    // const newBook = { ...book.toJSON(), releasedAt };
+
     return res
       .status(201)
-      .send({ status: true, message: "Success", data: newBook });
+      .send({ status: true, message: "Success", data: book });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -21,16 +32,28 @@ const registerBook = async function (req, res) {
 const getBook = async function (req, res) {
   try {
     let { userId, category, subcategory } = req.query;
-    let params = { isDeleted: false };
-    if (userId) params.userId = userId;
-    if (category) params.category = category;
+    let query = { isDeleted: false };
+    if (userId && !ObjectId.isValid(userId)) {
+      return res
+        .status(400)
+        .send({ status: false, msg: "UserId is not valid" });
+    }
+
+    if (category) query.category = category;
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
-      params.subcategory = { $all: newSubcategory };
+      query.subcategory = { $all: newSubcategory };
     }
     let book = await bookModel
-      .find(params)
-      .select({ ISBN: 0, subcategory: 0 })
+      .find(query)
+      .select({
+        ISBN: 0,
+        subcategory: 0,
+        __v: 0,
+        isDeleted: 0,
+        createdAt: 0,
+        updatedAt: 0,
+      })
       .sort({ title: 1 });
 
     if (book.length == 0) {
@@ -38,10 +61,76 @@ const getBook = async function (req, res) {
     }
     return res
       .status(200)
-      .send({ status: true, message: "Success", data: book });
+      .send({ status: true, message: "Books List", data: book });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 };
 
-module.exports = { registerBook, getBook };
+const getBooksByParams = async function (req, res) {
+
+  let bookId = req.params.bookId
+  if (bookId && !ObjectId.isValid(bookId))
+    return res.status(404).send({ status: false, message: "bookId is invalid" })
+  const getBook = await bookModel.findById(bookId)
+  if (!getBook)
+
+    return res.status(404).send({ status: false, message: "No book found" })
+
+  let newBook = { ...getBook.toJSON(), reviewsData: [] }
+
+  return res.status(200).send({ status: true, message: "Book List", data: newBook })
+
+
+
+}
+
+const updateBooks = async function (req, res) {
+  try {
+    let bookId = req.params.bookId;
+
+    let data = req.body;
+    const { title, excerpt, releasedAt, ISBN } = data
+
+
+
+    let bookData = await bookModel.findOne({ _id: bookId, isDeleted: false });
+    if (!bookData) return res.status(404).send({ status: false, msg: "bookId related data unavailable" });
+
+    //authorization
+    // if(req.headers["authorId"] !== blogData.authorId.toString()) return res.status(403).send({ status: false, msg: "You are not authorized...." })
+
+    if (title) bookData.title = title;
+
+
+    const getTitle = await bookModel.findOne({ title })
+    if (getTitle)
+
+      return res
+        .status(400)
+        .send({ status: false, message: "Title is already present" });
+
+
+
+    if (excerpt) bookData.excerpt = excerpt;
+
+    if (releasedAt) bookData.releasedAt = releasedAt;
+
+    if (ISBN) bookData.ISBN = ISBN;
+    bookData.save();
+    res.status(200).send({ status: true, message: "Success", data: bookData });
+  } catch (error) {
+
+    res.status(500).send({ err: error.message })
+  }
+}
+
+
+
+
+
+
+
+
+
+module.exports = { registerBook, getBook, getBooksByParams, updateBooks };
