@@ -230,13 +230,7 @@ const validationForBook = async function (req, res, next) {
 const validationForUpdatedBook = async function (req, res, next) {
   try {
     let data = req.body;
-    let {
-      title,
-      excerpt,
-      releasedAt,
-      ISBN,
-
-    } = data;
+    let { title, excerpt, releasedAt, ISBN, } = data;
 
     if (!isValid(data))
       return res
@@ -248,18 +242,25 @@ const validationForUpdatedBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Title is wrong format" });
+
     if (excerpt && !isValidValue(excerpt))
       return res
         .status(400)
         .send({ status: false, message: "excerpt is in wrong format" });
+
     if (releasedAt && !isValidValue(releasedAt))
       return res
         .status(400)
         .send({ status: false, message: "releasedAt is in wrong format" });
+
     if (ISBN && !isValidValue(ISBN))
       return res
         .status(400)
         .send({ status: false, message: "ISBN is in wrong format" });
+    const getISBN = await bookModel.findOne({ ISBN })
+    if (getISBN)
+      return res.status(400).send({ status: false, msg: "ISBN Already exists" });
+
 
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
@@ -271,4 +272,4 @@ const validationForUpdatedBook = async function (req, res, next) {
 
 
 
-module.exports = { validationForUser, validationForBook, isValid, isValidValue ,validationForUpdatedBook};
+module.exports = { validationForUser, validationForBook, isValid, isValidValue, validationForUpdatedBook };

@@ -74,48 +74,31 @@ const getBooksByParams = async function (req, res) {
     return res.status(404).send({ status: false, message: "bookId is invalid" })
   const getBook = await bookModel.findById(bookId)
   if (!getBook)
-
-    return res.status(404).send({ status: false, message: "No book found" })
-
+  return res.status(404).send({ status: false, message: "No book found" })
   let newBook = { ...getBook.toJSON(), reviewsData: [] }
 
   return res.status(200).send({ status: true, message: "Book List", data: newBook })
-
-
-
 }
+
 
 const updateBooks = async function (req, res) {
   try {
     let bookId = req.params.bookId;
-
     let data = req.body;
     const { title, excerpt, releasedAt, ISBN } = data
-
-
-
     let bookData = await bookModel.findOne({ _id: bookId, isDeleted: false });
     if (!bookData) return res.status(404).send({ status: false, msg: "bookId related data unavailable" });
-
     //authorization
     // if(req.headers["authorId"] !== blogData.authorId.toString()) return res.status(403).send({ status: false, msg: "You are not authorized...." })
-
     if (title) bookData.title = title;
-
-
     const getTitle = await bookModel.findOne({ title })
     if (getTitle)
-
       return res
         .status(400)
         .send({ status: false, message: "Title is already present" });
 
-
-
     if (excerpt) bookData.excerpt = excerpt;
-
     if (releasedAt) bookData.releasedAt = releasedAt;
-
     if (ISBN) bookData.ISBN = ISBN;
     bookData.save();
     res.status(200).send({ status: true, message: "Success", data: bookData });
@@ -124,13 +107,30 @@ const updateBooks = async function (req, res) {
     res.status(500).send({ err: error.message })
   }
 }
-
-
-
-
-
-
-
-
-
 module.exports = { registerBook, getBook, getBooksByParams, updateBooks };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
