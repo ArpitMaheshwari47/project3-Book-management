@@ -32,11 +32,11 @@ const loginUser = async function (req, res) {
       {
         userId: user._id.toString(),
         iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 10*60*60,
+        exp: Math.floor(Date.now() / 1000) + 10 * 60 * 60,
       },
       "project3"
     );
-      
+    res.setHeader("x-api-key", token);  
     res.status(200).send({ status: true, message: "Success", data: token });
   } catch (error) {
     res.status(500).send({ status: false, message: error.message });

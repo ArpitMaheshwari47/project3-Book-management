@@ -37,5 +37,11 @@ router.put(
   bookController.updateBooks
 );
 
+router.delete(
+  "/books/:bookId",
+  middlewares.Authentication,
+  bookController.deleteBook
+);
+
 
 module.exports = router;
