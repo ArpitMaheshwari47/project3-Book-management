@@ -15,4 +15,11 @@ router.get("/books",middlewares.Authentication,bookController.getBook);
 router.get( "/books/:bookId", middlewares.Authentication, bookController.getBooksByParams);
 router.put( "/books/:bookId", middlewares.Authentication, validation.validationForUpdatedBook, bookController.updateBooks);
 
+router.delete(
+  "/books/:bookId",
+  middlewares.Authentication,
+  bookController.deleteBook
+);
+
+
 module.exports = router;
