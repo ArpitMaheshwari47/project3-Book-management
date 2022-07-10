@@ -8,10 +8,6 @@ const { isValid, isValidValue } = require("../validator/validation");
 const registerBook = async function (req, res) {
   try {
     let body = req.body;
-    // const releasedAt = moment(body.releasedAt).format("YYYY-MM-DDTh:mm:ss");
-
-    // // if (!moment(releasedAt).isValid())
-    // //   return res.status(400).send({ status: false, message: "Invalid input" });
 
     const user = await userModel.findById(body.userId);
     console.log(user);
@@ -26,8 +22,6 @@ const registerBook = async function (req, res) {
         .send({ status: false, msg: "You are not authorized...." });
 
     const book = await bookModel.create(body);
-    // const newBook = { ...book.toJSON() };
-
     return res
       .status(201)
       .send({ status: true, message: "Success", data: book });
@@ -75,20 +69,24 @@ const getBook = async function (req, res) {
 };
 
 const getBooksByParams = async function (req, res) {
-  let bookId = req.params.bookId;
-  if (bookId && !ObjectId.isValid(bookId))
+  try {
+    let bookId = req.params.bookId;
+    if (bookId && !ObjectId.isValid(bookId))
+      return res
+        .status(404)
+        .send({ status: false, message: "bookId is invalid" });
+    const getBook = await bookModel.findById(bookId);
+    if (!getBook)
+      return res.status(404).send({ status: false, message: "No book found" });
+
+    let newBook = { ...getBook.toJSON(), reviewsData: [] };
+
     return res
-      .status(404)
-      .send({ status: false, message: "bookId is invalid" });
-  const getBook = await bookModel.findById(bookId);
-  if (!getBook)
-    return res.status(404).send({ status: false, message: "No book found" });
-
-  let newBook = { ...getBook.toJSON(), reviewsData: [] };
-
-  return res
-    .status(200)
-    .send({ status: true, message: "Book List", data: newBook });
+      .status(200)
+      .send({ status: true, message: "Book List", data: newBook });
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
 };
 
 
@@ -133,6 +131,7 @@ const updateBooks = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "ISBN is already present" });
+
     bookData.save();
 
     res.status(200).send({ status: true, message: "Success", data: bookData });
@@ -159,7 +158,7 @@ const deleteBook = async function (req, res) {
 
     const deleteBookById = await bookModel.findByIdAndUpdate(
       { _id: bookId, isDeleted: false },
-      { $set: { isDeleted: true } }
+      { $set: { isDeleted: true, deletedAt: Date.now() } }
     );
     if (!deleteBookById)
       return res
