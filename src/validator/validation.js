@@ -131,7 +131,7 @@ const validationForUser = async function (req, res, next) {
       });
     else if (
       address.pincode &&
-      !isValidValue(address.pincode) &&
+      !isValidValue(address.pincode) ||
       !/^(\d{4}|\d{6})$/.test(address.pincode)
     )
       return res.status(400).send({
