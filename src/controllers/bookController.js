@@ -41,10 +41,12 @@ const getBook = async function (req, res) {
     }
 
     if (category) query.category = category;
+    
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
       query.subcategory = { $all: newSubcategory };
     }
+    
     let book = await bookModel
       .find(query)
       .select({
