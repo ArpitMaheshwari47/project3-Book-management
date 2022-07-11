@@ -248,7 +248,9 @@ const validationForBook = async function (req, res, next) {
         .send({ status: false, message: "releasedAt is required" });
 
     if (!moment(releasedAt).isValid())
-      return res.status(400).send({ status: false, message: "Invalid Parameter" });
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid Parameter" });
 
     if (reviews && isNaN(reviews))
       return res
@@ -275,30 +277,129 @@ const validationForUpdatedBook = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Missing Parameters" });
 
-    if (title && !isValidValue(title))
+    if (title != undefined && !isValidValue(title)) {
       return res
         .status(400)
-        .send({ status: false, message: "Title is wrong format" });
+        .send({ status: false, message: "Title should not be empty" });
+    }
 
-    if (excerpt && !isValidValue(excerpt))
+    if (excerpt != undefined && !isValidValue(excerpt))
       return res
         .status(400)
-        .send({ status: false, message: "excerpt is in wrong format" });
+        .send({ status: false, message: "Expert should not be empty" });
 
-    if (releasedAt && !isValidValue(releasedAt))
+    if (releasedAt != undefined && !isValidValue(releasedAt))
       return res
         .status(400)
-        .send({ status: false, message: "releasedAt is in wrong format" });
+        .send({ status: false, message: "Releasedat should not be empty" });
 
-    if (ISBN && !isValidValue(ISBN))
+    if (ISBN != undefined && !isValidValue(ISBN))
       return res
         .status(400)
-        .send({ status: false, message: "ISBN is in wrong format" });
+        .send({ status: false, message: "ISBN should not be empty" });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
   next();
 };
+
+const validationForReview = async function (req, res, next) {
+  try {
+    let data = req.body;
+    let bookId = req.params.bookId;
+    let { rating, review, reviewedBy } = data;
+
+    if (!isValid(data))
+      return res
+        .status(400)
+        .send({ status: false, message: "Missing Parameters" });
+
+    if (!ObjectId.isValid(bookId)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "BookId is not valid" });
+    }
+    if (!rating)
+      return res
+        .status(400)
+        .send({ status: false, message: "Rating is required" });
+    else if (isNaN(rating))
+      return res
+        .status(400)
+        .send({ status: false, message: "Rating is in wrong format" });
+
+    if (!review)
+      return res
+        .status(400)
+        .send({ status: false, message: "Review is required" });
+
+    if (!isValidValue(review))
+      return res
+        .status(400)
+        .send({ status: false, message: "Review is in wrong format" });
+
+    if (
+      reviewedBy !== undefined &&
+      (!isValidValue(reviewedBy) || !azValid(reviewedBy))
+    ) {
+      return res
+        .status(400)
+        .send({ status: false, message: "ReviewBy is in wrong format" });
+    }
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+  next();
+};
+
+const validationUpdateReview = async function (req, res, next) {
+  try {
+    let data = req.body;
+    let bookId = req.params.bookId;
+    let reviewId = req.params.reviewId;
+    let { rating, review, reviewedBy } = data;
+
+    if (!isValid(data))
+      return res
+        .status(400)
+        .send({ status: false, message: "Missing Parameters" });
+
+    if (!ObjectId.isValid(bookId)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "BookId is not valid" });
+    }
+
+    if (!ObjectId.isValid(reviewId)) {
+      return res
+        .status(400)
+        .send({ status: false, message: "ReviewId is not valid" });
+    }
+
+    if (rating && isNaN(rating))
+      return res
+        .status(400)
+        .send({ status: false, message: "Rating is in wrong format" });
+
+    if (review && !isValidValue(review))
+      return res
+        .status(400)
+        .send({ status: false, message: "Review is in wrong format" });
+
+    if (
+      reviewedBy !== undefined &&
+      (!isValidValue(reviewedBy) || !azValid(reviewedBy))
+    ) {
+      return res
+        .status(400)
+        .send({ status: false, message: "ReviewBy is in wrong format" });
+    }
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+  next();
+};
+
 
 module.exports = {
   validationForUser,
@@ -306,4 +407,6 @@ module.exports = {
   isValid,
   isValidValue,
   validationForUpdatedBook,
+  validationForReview,
+  validationUpdateReview,
 };
