@@ -62,6 +62,9 @@ const updateReviews = async function (req, res) {
     let bookId = req.params.bookId;
     let reviewId = req.params.reviewId;
 
+    
+
+
     let data = req.body;
     const { rating, review, reviewedBy } = data;
 
