@@ -1,22 +1,21 @@
 const bookModel = require("../models/bookModel");
-const moment = require("moment");
-const mongoose = require("mongoose");
 const userModel = require("../models/userModel");
 const reviewModel = require("../models/reviewsmodel");
+const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const { isValid, isValidValue } = require("../validator/validation");
 
+// .................................. Create Book  .............................//
 const registerBook = async function (req, res) {
   try {
     let body = req.body;
 
     const user = await userModel.findById(body.userId);
-    console.log(user);
     if (!user)
       return res
         .status(400)
         .send({ status: false, message: "User not exists" });
 
+    // authorization
     if (req.headers["userId"] !== user._id.toString())
       return res
         .status(403)
@@ -31,6 +30,7 @@ const registerBook = async function (req, res) {
   }
 };
 
+// .................................. Get Book  .............................//
 const getBook = async function (req, res) {
   try {
     let { userId, category, subcategory } = req.query;
@@ -60,7 +60,7 @@ const getBook = async function (req, res) {
       })
       .sort({ title: 1 });
 
-    if (book.length == 0) {
+    if (book.length === 0) {
       return res.status(404).send({ status: false, message: "No Book found" });
     }
     return res
@@ -71,6 +71,7 @@ const getBook = async function (req, res) {
   }
 };
 
+// .................................. Get Book By Path params .............................//
 const getBooksByParams = async function (req, res) {
   try {
     let bookId = req.params.bookId;
@@ -85,7 +86,6 @@ const getBooksByParams = async function (req, res) {
       return res.status(404).send({ status: false, message: "No book found" });
 
     let reviewsData = [];
-
     if (book.reviews !== 0) {
       reviewsData = await reviewModel
         .find()
@@ -102,7 +102,7 @@ const getBooksByParams = async function (req, res) {
   }
 };
 
-
+// .................................. Update Book  .............................//
 const updateBooks = async function (req, res) {
   try {
     let bookId = req.params.bookId;
@@ -153,6 +153,7 @@ const updateBooks = async function (req, res) {
   }
 };
 
+// .................................. Delete Book  .............................//
 const deleteBook = async function (req, res) {
   try {
     let bookId = req.params.bookId;

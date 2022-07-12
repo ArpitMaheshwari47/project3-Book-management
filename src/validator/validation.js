@@ -327,6 +327,10 @@ const validationForReview = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Rating is in wrong format" });
+    else if (rating < 1 || rating > 5)
+      return res
+        .status(400)
+        .send({ status: false, message: "Rating must be from 1 to 5" });
 
     if (!review)
       return res
@@ -380,6 +384,10 @@ const validationUpdateReview = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Rating is in wrong format" });
+    else if (rating < 1 || rating > 5)
+      return res
+        .status(400)
+        .send({ status: false, message: "Rating must be from 1 to 5" });
 
     if (review && !isValidValue(review))
       return res
@@ -399,7 +407,6 @@ const validationUpdateReview = async function (req, res, next) {
   }
   next();
 };
-
 
 module.exports = {
   validationForUser,

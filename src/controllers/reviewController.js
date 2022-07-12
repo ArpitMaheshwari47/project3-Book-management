@@ -4,6 +4,7 @@ const { getBook } = require("./bookController");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
+// .................................. Create Reviews  .............................//
 const createReviews = async function (req, res) {
   try {
     let body = req.body;
@@ -17,7 +18,15 @@ const createReviews = async function (req, res) {
     body.reviewedAt = new Date().toISOString();
 
     const review = await reviewModel.create(body);
-    // console.log(review)
+
+    const newReview = {
+      _id: review._id,
+      bookId: bookId,
+      reviewedBy: body.reviewedBy,
+      reviewedAt: body.reviewedAt,
+      rating: body.rating,
+      review: body.review,
+    };
     const booksId = await bookModel.findById({ _id: bookId });
     if (!booksId)
       return res
@@ -30,22 +39,23 @@ const createReviews = async function (req, res) {
         .send({ status: false, message: "Book is deleted" });
 
     const bookReviews = await bookModel.findOneAndUpdate(
-      { _id: bookId },
+      { _id: bookId, isDeleted: false },
       { $inc: { reviews: 1 } },
       { new: true }
     );
     console.log(bookReviews)
     bookReviews.reviewsData = review;
 
-    const reviewsDetails = { ...bookReviews.toJSON(), reviewsData: review };
+    // const reviewsDetails = { ...bookReviews.toJSON(), reviewsData: review };
     return res
       .status(201)
-      .send({ status: true, message: "Success", data: reviewsDetails });
+      .send({ status: true, message: "Success", data: newReview });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 };
 
+// .................................. Update Reviews .............................//
 const updateReviews = async function (req, res) {
   try {
     let bookId = req.params.bookId;
@@ -81,6 +91,7 @@ const updateReviews = async function (req, res) {
   }
 };
 
+// .................................. Delete Reviews  .............................//
 const deleteReview = async function (req, res) {
   try {
     let bookId = req.params.bookId;
