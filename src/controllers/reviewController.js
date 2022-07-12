@@ -1,6 +1,5 @@
 const bookModel = require("../models/bookModel");
 const reviewModel = require("../models/reviewsmodel");
-const { getBook } = require("./bookController");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -27,28 +26,31 @@ const createReviews = async function (req, res) {
       rating: body.rating,
       review: body.review,
     };
-    const booksId = await bookModel.findById({ _id: bookId });
-    if (!booksId)
+    const book = await bookModel.findById({ _id: bookId });
+    if (!book)
       return res
         .status(400)
         .send({ status: false, message: "Book is not exist" });
 
-    if (booksId.isDeleted)
+    if (book.isDeleted)
       return res
         .status(400)
         .send({ status: false, message: "Book is deleted" });
 
-    const bookReviews = await bookModel.findOneAndUpdate(
+    const bookUpdateWithReviews = await bookModel.findOneAndUpdate(
       { _id: bookId, isDeleted: false },
       { $inc: { reviews: 1 } },
       { new: true }
     );
-    bookReviews.reviewsData = review;
+    bookUpdateWithReviews.reviewsData = review;
 
-    // const reviewsDetails = { ...bookReviews.toJSON(), reviewsData: review };
+    const reviewsDetails = {
+      ...bookUpdateWithReviews.toJSON(),
+      reviewsData: review,
+    };
     return res
       .status(201)
-      .send({ status: true, message: "Success", data: newReview });
+      .send({ status: true, message: "Success", data: reviewsDetails });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -63,28 +65,35 @@ const updateReviews = async function (req, res) {
     let data = req.body;
     const { rating, review, reviewedBy } = data;
 
-    let bookData = await bookModel.findOne({ _id: bookId, isDeleted: false });
+    let bookDetails = await bookModel.findOne({
+      _id: bookId,
+      isDeleted: false,
+    });
 
-    if (!bookData)
+    if (!bookDetails)
       return res.status(404).send({
         status: false,
         msg: "The book is deleted so we can't give any review",
       });
 
-    let reviewData = await reviewModel.findOneAndUpdate(
-      { _id: reviewId, bookId: bookData._id.toString(), isDeleted: false },
+    let reviewDetails = await reviewModel.findOneAndUpdate(
+      { _id: reviewId, bookId: bookDetails._id.toString(), isDeleted: false },
       { $set: { rating, review, reviewedBy } },
       { new: true }
     );
 
-    if (!reviewData)
+    if (!reviewDetails)
       return res
         .status(404)
         .send({ status: false, msg: "The book is not reviewed" });
 
+    const newBookDetails = {
+      ...bookDetails.toJSON(),
+      reviewsData: reviewDetails,
+    };
     res
       .status(200)
-      .send({ status: true, message: "Success", data: reviewData });
+      .send({ status: true, message: "Success", data: newBookDetails });
   } catch (error) {
     res.status(500).send({ err: error.message });
   }
@@ -107,7 +116,6 @@ const deleteReview = async function (req, res) {
         .status(400)
         .send({ status: false, message: "ReviewId is not valid" });
     }
-
     const bookDetails = await bookModel.findOneAndUpdate(
       { _id: bookId },
       { $inc: { reviews: -1 } },

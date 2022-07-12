@@ -4,24 +4,26 @@ const userModel = require("../models/userModel");
 const ObjectId = mongoose.Types.ObjectId;
 const moment = require("moment");
 
-const isValid = function (value) {
-  // Validataion for empty request body
+// Validataion for empty request body
+const isValidObject = function (value) {
   if (Object.keys(value).length === 0) return false;
   else return true;
 };
 
-const isValidValue = function (value) {
-  // Validation for Strings/ Empty strings
+// Validation for Strings/ Empty strings
+const hasEmptyString = function (value) {
   if (typeof value !== "string") return false;
   else if (value.trim().length == 0) return false;
   else return true;
 };
 
-const azValid = function (value) {
+// Validation for Strings contain numbers
+const stringContainNumber = function (value) {
   if (!/^[ a-z ]+$/i.test(value)) return false;
   else return true;
 };
 
+// Validation for User
 const validationForUser = async function (req, res, next) {
   try {
     let data = req.body;
@@ -29,7 +31,7 @@ const validationForUser = async function (req, res, next) {
 
     let allowedTitles = ["Mr", "Mrs", "Miss"];
 
-    if (!isValid(data))
+    if (!isValidObject(data))
       return res
         .status(400)
         .send({ status: false, message: "Missing Parameters" });
@@ -38,7 +40,7 @@ const validationForUser = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Title is required" });
-    else if (!isValidValue(title))
+    else if (!hasEmptyString(title))
       return res
         .status(400)
         .send({ status: false, message: "Title is in wrong format" });
@@ -52,7 +54,7 @@ const validationForUser = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Name is required" });
-    else if (!isValidValue(name) || !azValid(name))
+    else if (!hasEmptyString(name) || !stringContainNumber(name))
       return res
         .status(400)
         .send({ status: false, message: "Name is in wrong format" });
@@ -79,7 +81,7 @@ const validationForUser = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Email is required" });
     let emailId = email.trim();
-    if (!isValidValue(emailId))
+    if (!hasEmptyString(emailId))
       return res
         .status(400)
         .send({ status: false, message: "Email is in wrong format" });
@@ -97,7 +99,7 @@ const validationForUser = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Password is required" });
-    else if (!isValidValue(password))
+    else if (!hasEmptyString(password))
       return res
         .status(400)
         .send({ status: false, message: "Password is in wrong format" });
@@ -112,38 +114,46 @@ const validationForUser = async function (req, res, next) {
           "Characters length should be in between 8 and 15 and must contain one special charcter , one alphabet and one number",
       });
 
-    if (address && !isValid(address))
+    if (address && typeof address !== "object") {
       return res
         .status(400)
-        .send({ status: false, message: "address is required" });
-    if (address.street && !isValidValue(address.street))
-      return res.status(400).send({
-        status: false,
-        message: "Street should be present with correct format",
-      });
-    else if (
-      (address.city && !isValidValue(address.city)) ||
-      !azValid(address.city)
-    )
-      return res.status(400).send({
-        status: false,
-        message: "City should be present with correct format",
-      });
-    else if (
-      address.pincode &&
-      !isValidValue(address.pincode) &&
-      !/^(\d{4}|\d{6})$/.test(address.pincode)
-    )
-      return res.status(400).send({
-        status: false,
-        message: "Pincode should be present with correct format",
-      });
+        .send({ status: false, message: "Invalid address format" });
+    } else if (address) {
+      if (!isValidObject(address)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "address is required" });
+      } else if (address.street && !hasEmptyString(address.street)) {
+        return res.status(400).send({
+          status: false,
+          message: "Street should be present with correct format",
+        });
+      } else if (
+        (address.city && !hasEmptyString(address.city)) ||
+        !stringContainNumber(address.city)
+      ) {
+        return res.status(400).send({
+          status: false,
+          message: "City should be present with correct format",
+        });
+      } else if (
+        address.pincode &&
+        !hasEmptyString(address.pincode) &&
+        !/^(\d{4}|\d{6})$/.test(address.pincode)
+      ) {
+        return res.status(400).send({
+          status: false,
+          message: "Pincode should be present with correct format",
+        });
+      }
+    }
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
   next();
 };
 
+// Validation for Books
 const validationForBook = async function (req, res, next) {
   try {
     let data = req.body;
@@ -159,7 +169,7 @@ const validationForBook = async function (req, res, next) {
       isDeleted,
     } = data;
 
-    if (!isValid(data))
+    if (!isValidObject(data))
       return res
         .status(400)
         .send({ status: false, message: "Missing Parameters" });
@@ -168,7 +178,7 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Title is required" });
-    else if (!isValidValue(title))
+    else if (!hasEmptyString(title))
       return res
         .status(400)
         .send({ status: false, message: "Title is in wrong format" });
@@ -183,7 +193,7 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Excerpt is required" });
-    else if (!isValidValue(excerpt))
+    else if (!hasEmptyString(excerpt))
       return res
         .status(400)
         .send({ status: false, message: "Excerpt is in wrong format" });
@@ -201,7 +211,7 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "ISBN is required" });
-    else if (!isValidValue(ISBN))
+    else if (!hasEmptyString(ISBN))
       return res
         .status(400)
         .send({ status: false, message: "ISBN is in wrong format" });
@@ -218,7 +228,7 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "category is required" });
-    else if (!isValidValue(category) || !azValid(category))
+    else if (!hasEmptyString(category) || !stringContainNumber(category))
       return res
         .status(400)
         .send({ status: false, message: "Category is in wrong format" });
@@ -234,7 +244,7 @@ const validationForBook = async function (req, res, next) {
     else {
       let isValidsubcategory = true;
       subcategory.forEach((sub) => {
-        isValidsubcategory &&= azValid(sub);
+        isValidsubcategory &&= stringContainNumber(sub);
       });
       if (!isValidsubcategory)
         return res
@@ -267,33 +277,34 @@ const validationForBook = async function (req, res, next) {
   next();
 };
 
+// Validation for Updated Books
 const validationForUpdatedBook = async function (req, res, next) {
   try {
     let data = req.body;
     let { title, excerpt, releasedAt, ISBN } = data;
 
-    if (!isValid(data))
+    if (!isValidObject(data))
       return res
         .status(400)
         .send({ status: false, message: "Missing Parameters" });
 
-    if (title != undefined && !isValidValue(title)) {
+    if (title != undefined && !hasEmptyString(title)) {
       return res
         .status(400)
         .send({ status: false, message: "Title should not be empty" });
     }
 
-    if (excerpt != undefined && !isValidValue(excerpt))
+    if (excerpt != undefined && !hasEmptyString(excerpt))
       return res
         .status(400)
         .send({ status: false, message: "Expert should not be empty" });
 
-    if (releasedAt != undefined && !isValidValue(releasedAt))
+    if (releasedAt != undefined && !hasEmptyString(releasedAt))
       return res
         .status(400)
         .send({ status: false, message: "Releasedat should not be empty" });
 
-    if (ISBN != undefined && !isValidValue(ISBN))
+    if (ISBN != undefined && !hasEmptyString(ISBN))
       return res
         .status(400)
         .send({ status: false, message: "ISBN should not be empty" });
@@ -303,13 +314,14 @@ const validationForUpdatedBook = async function (req, res, next) {
   next();
 };
 
+// Validation for reviews
 const validationForReview = async function (req, res, next) {
   try {
     let data = req.body;
     let bookId = req.params.bookId;
     let { rating, review, reviewedBy } = data;
 
-    if (!isValid(data))
+    if (!isValidObject(data))
       return res
         .status(400)
         .send({ status: false, message: "Missing Parameters" });
@@ -337,14 +349,14 @@ const validationForReview = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Review is required" });
 
-    if (!isValidValue(review))
+    if (!hasEmptyString(review))
       return res
         .status(400)
         .send({ status: false, message: "Review is in wrong format" });
 
     if (
       reviewedBy !== undefined &&
-      (!isValidValue(reviewedBy) || !azValid(reviewedBy))
+      (!hasEmptyString(reviewedBy) || !stringContainNumber(reviewedBy))
     ) {
       return res
         .status(400)
@@ -356,6 +368,7 @@ const validationForReview = async function (req, res, next) {
   next();
 };
 
+// Validation for Updated reviews
 const validationUpdateReview = async function (req, res, next) {
   try {
     let data = req.body;
@@ -363,7 +376,7 @@ const validationUpdateReview = async function (req, res, next) {
     let reviewId = req.params.reviewId;
     let { rating, review, reviewedBy } = data;
 
-    if (!isValid(data))
+    if (!isValidObject(data))
       return res
         .status(400)
         .send({ status: false, message: "Missing Parameters" });
@@ -389,14 +402,14 @@ const validationUpdateReview = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Rating must be from 1 to 5" });
 
-    if (review && !isValidValue(review))
+    if (review && !hasEmptyString(review))
       return res
         .status(400)
         .send({ status: false, message: "Review is in wrong format" });
 
     if (
       reviewedBy !== undefined &&
-      (!isValidValue(reviewedBy) || !azValid(reviewedBy))
+      (!hasEmptyString(reviewedBy) || !stringContainNumber(reviewedBy))
     ) {
       return res
         .status(400)
@@ -411,8 +424,6 @@ const validationUpdateReview = async function (req, res, next) {
 module.exports = {
   validationForUser,
   validationForBook,
-  isValid,
-  isValidValue,
   validationForUpdatedBook,
   validationForReview,
   validationUpdateReview,
