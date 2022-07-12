@@ -174,6 +174,11 @@ const deleteBook = async function (req, res) {
 
     //authorisation
     let book = await bookModel.findById({ _id: bookId });
+    if (!book) {
+      return res
+        .status(404)
+        .send({ status: false, msg: "Book does not exist" });
+    }
     let userId = book.userId.toString();
     if (req.headers["userId"] !== userId)
       return res

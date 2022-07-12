@@ -123,7 +123,7 @@ const validationForUser = async function (req, res, next) {
         return res
           .status(400)
           .send({ status: false, message: "address is required" });
-      } else if (address.street && !hasEmptyString(address.street)) {
+      } else if ( address.street != undefined && !hasEmptyString(address.street)) {
         return res.status(400).send({
           status: false,
           message: "Street should be present with correct format",
@@ -138,7 +138,7 @@ const validationForUser = async function (req, res, next) {
         });
       } else if (
         address.pincode &&
-        !hasEmptyString(address.pincode) &&
+        !hasEmptyString(address.pincode) ||
         !/^(\d{4}|\d{6})$/.test(address.pincode)
       ) {
         return res.status(400).send({
@@ -344,12 +344,7 @@ const validationForReview = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Rating must be from 1 to 5" });
 
-    if (!review)
-      return res
-        .status(400)
-        .send({ status: false, message: "Review is required" });
-
-    if (!hasEmptyString(review))
+    if (review && !hasEmptyString(review))
       return res
         .status(400)
         .send({ status: false, message: "Review is in wrong format" });

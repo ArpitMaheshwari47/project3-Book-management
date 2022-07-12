@@ -41,12 +41,12 @@ const createReviews = async function (req, res) {
       { _id: bookId, isDeleted: false },
       { $inc: { reviews: 1 } },
       { new: true }
-    );
-    bookUpdateWithReviews.reviewsData = review;
+    ).select({__v:0});
+    bookUpdateWithReviews.reviewsData = newReview;
 
     const reviewsDetails = {
       ...bookUpdateWithReviews.toJSON(),
-      reviewsData: review,
+      reviewsData: newReview,
     };
     return res
       .status(201)
@@ -68,19 +68,19 @@ const updateReviews = async function (req, res) {
     let bookDetails = await bookModel.findOne({
       _id: bookId,
       isDeleted: false,
-    });
+    }).select({__v:0});
 
     if (!bookDetails)
       return res.status(404).send({
         status: false,
-        msg: "The book is deleted so we can't give any review",
+        msg: "The book does not exist",
       });
 
     let reviewDetails = await reviewModel.findOneAndUpdate(
       { _id: reviewId, bookId: bookDetails._id.toString(), isDeleted: false },
       { $set: { rating, review, reviewedBy } },
       { new: true }
-    );
+    ).select({__v:0,createdAt:0,updatedAt:0,isDeleted:0});
 
     if (!reviewDetails)
       return res
