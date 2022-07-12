@@ -42,10 +42,12 @@ const getBook = async function (req, res) {
     } else if (userId) query.userId = userId;
 
     if (category) query.category = category;
+    
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
       query.subcategory = { $all: newSubcategory };
     }
+    
     let book = await bookModel
       .find(query)
       .select({
@@ -126,7 +128,8 @@ const updateBooks = async function (req, res) {
     if (!bookDetails)
       return res
         .status(404)
-        .send({ status: false, msg: "The book is deleted so u can't access" });
+        .send({ status: false, msg: "Book does not exists" });
+
 
     //authorization
     let book = await bookModel.findById({ _id: bookId });
@@ -174,11 +177,11 @@ const deleteBook = async function (req, res) {
 
     //authorisation
     let book = await bookModel.findById({ _id: bookId });
-    if (!book) {
-      return res
+    if(!book)
+    return res
         .status(404)
-        .send({ status: false, msg: "Book does not exist" });
-    }
+        .send({ status: false, message: "Book does not exist" });
+
     let userId = book.userId.toString();
     if (req.headers["userId"] !== userId)
       return res

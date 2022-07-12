@@ -111,7 +111,7 @@ const validationForUser = async function (req, res, next) {
       return res.status(400).send({
         status: false,
         message:
-          "Characters length should be in between 8 and 15 and must contain one special charcter , one alphabet and one number",
+          "Password length should be in between 8 and 15 and must contain one special charcter , one alphabet and one number",
       });
 
     if (address && typeof address !== "object") {
@@ -123,7 +123,10 @@ const validationForUser = async function (req, res, next) {
         return res
           .status(400)
           .send({ status: false, message: "address is required" });
-      } else if ( address.street != undefined && !hasEmptyString(address.street)) {
+      } else if (
+        address.street !== undefined &&
+        !hasEmptyString(address.street)
+      ) {
         return res.status(400).send({
           status: false,
           message: "Street should be present with correct format",
@@ -138,14 +141,34 @@ const validationForUser = async function (req, res, next) {
         });
       } else if (
         address.pincode &&
-        !hasEmptyString(address.pincode) ||
-        !/^(\d{4}|\d{6})$/.test(address.pincode)
+        (!hasEmptyString(address.pincode) ||
+          !/^(\d{4}|\d{6})$/.test(address.pincode))
       ) {
         return res.status(400).send({
           status: false,
           message: "Pincode should be present with correct format",
         });
       }
+    }
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+  next();
+};
+
+const validationForLogin = async function (req, res, next) {
+  try {
+    let email = req.body.email;
+    let password = req.body.password;
+    if (!email) {
+      return res
+        .status(400)
+        .send({ status: false, message: "Email is required" });
+    }
+    if (!password) {
+      return res
+        .status(400)
+        .send({ status: false, message: "Password is required" });
     }
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
@@ -256,11 +279,10 @@ const validationForBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "releasedAt is required" });
-
-    if (!moment(releasedAt).isValid())
+    else if (!moment(releasedAt).isValid())
       return res
         .status(400)
-        .send({ status: false, message: "Invalid Parameter" });
+        .send({ status: false, message: "Invalid release date" });
 
     if (reviews && isNaN(reviews))
       return res
@@ -303,6 +325,10 @@ const validationForUpdatedBook = async function (req, res, next) {
       return res
         .status(400)
         .send({ status: false, message: "Releasedat should not be empty" });
+    else if (!moment(releasedAt).isValid())
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid Parameter" });
 
     if (ISBN != undefined && !hasEmptyString(ISBN))
       return res
@@ -331,7 +357,7 @@ const validationForReview = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "BookId is not valid" });
     }
-    if (!rating)
+    if (rating == undefined)
       return res
         .status(400)
         .send({ status: false, message: "Rating is required" });
@@ -418,6 +444,7 @@ const validationUpdateReview = async function (req, res, next) {
 
 module.exports = {
   validationForUser,
+  validationForLogin,
   validationForBook,
   validationForUpdatedBook,
   validationForReview,

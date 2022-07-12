@@ -85,7 +85,7 @@ const updateReviews = async function (req, res) {
     if (!reviewDetails)
       return res
         .status(404)
-        .send({ status: false, msg: "The book is not reviewed" });
+        .send({ status: false, msg: "The review should be of corresponding book" });
 
     const newBookDetails = {
       ...bookDetails.toJSON(),
@@ -133,7 +133,7 @@ const deleteReview = async function (req, res) {
     if (!reviewDetails)
       return res
         .status(404)
-        .send({ status: false, message: "Review does not exist" });
+        .send({ status: false, message: "The review should be of corresponding book" });
     else if (reviewDetails.isDeleted)
       return res
         .status(200)
