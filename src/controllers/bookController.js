@@ -2,18 +2,90 @@ const bookModel = require("../models/bookModel");
 const userModel = require("../models/userModel");
 const reviewModel = require("../models/reviewsmodel");
 const mongoose = require("mongoose");
+const aws = require("aws-sdk")
 const ObjectId = mongoose.Types.ObjectId;
+
+// aws.config.update({
+//   accessKeyId: "AKIAY3L35MCRVFM24Q7U",
+//   secretAccessKey: "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",
+//   region: "ap-south-1"
+// })
+
+let uploadFile = async (file) => {
+  return new Promise(function (resolve, reject) {
+
+    let s3 = new aws.S3({ apiVersion: '2006-03-01' });
+
+    var uploadParams = {
+      ACL: "public-read",
+      Bucket: "classroom-training-bucket",  //HERE
+      Key: "ankita/" + file.originalname, //HERE 
+      Body: file.buffer
+    }
+
+
+    s3.upload(uploadParams, function (err, data) {
+      if (err) {
+        return reject({ "error": err })
+      }
+      console.log(data)
+      console.log("file uploaded succesfully")
+      return resolve(data.Location)
+    })
+
+
+
+  })
+}
+
+// router.post("/write-file-aws", async function (req, res) {
+
+//   try {
+//     let body = req.body
+//     let files = req.files
+//     if (files && files.length > 0) {
+
+//       let uploadedFileURL = await uploadFile(files[0])
+//       body.bookCover = uploadedFileURL
+//       res.status(201).send({ msg: "file uploaded succesfully", data: uploadedFileURL })
+//     }
+//     else {
+//       res.status(400).send({ msg: "No file found" })
+//     }
+
+//   }
+//   catch (err) {
+//     res.status(500).send({ msg: err })
+//   }
+
+// })
+
 
 // .................................. Create Book  .............................//
 const registerBook = async function (req, res) {
   try {
-    let body = req.body;
+    let data = req.body;
 
-    const user = await userModel.findById(body.userId);
+    const user = await userModel.findById(data.userId);
     if (!user)
       return res
         .status(400)
         .send({ status: false, message: "User not exists" });
+
+    // let files = req.files
+    // console.log(files)
+    // if (files && files.length > 0) {
+
+    //   let uploadedFileURL = await uploadFile(files[0])
+    //   // data.bookCover = uploadedFileURL
+    //   res.status(201).send({ msg: "file uploaded succesfully", data: uploadedFileURL })
+    // }
+    // else {
+    //   return res.status(400).send({ msg: "No file found" })
+    // }
+
+
+
 
     // authorization
     if (req.headers["userId"] !== user._id.toString())
@@ -21,7 +93,7 @@ const registerBook = async function (req, res) {
         .status(403)
         .send({ status: false, msg: "You are not authorized...." });
 
-    const book = await bookModel.create(body);
+    const book = await bookModel.create(data);
     return res
       .status(201)
       .send({ status: true, message: "Success", data: book });
@@ -42,12 +114,12 @@ const getBook = async function (req, res) {
     } else if (userId) query.userId = userId;
 
     if (category) query.category = category;
-    
+
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
       query.subcategory = { $all: newSubcategory };
     }
-    
+
     let book = await bookModel
       .find(query)
       .select({
@@ -158,7 +230,7 @@ const updateBooks = async function (req, res) {
 
     bookDetails.save();
 
-    res
+    return res
       .status(200)
       .send({ status: true, message: "Success", data: bookDetails });
   } catch (error) {
@@ -177,8 +249,8 @@ const deleteBook = async function (req, res) {
 
     //authorisation
     let book = await bookModel.findById({ _id: bookId });
-    if(!book)
-    return res
+    if (!book)
+      return res
         .status(404)
         .send({ status: false, message: "Book does not exist" });
 

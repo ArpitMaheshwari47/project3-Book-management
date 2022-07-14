@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bookModel = require("../models/bookModel");
 const userModel = require("../models/userModel");
 const ObjectId = mongoose.Types.ObjectId;
+const aws = require("aws-sdk")
 const moment = require("moment");
 
 // Validataion for empty request body
@@ -124,7 +125,7 @@ const validationForUser = async function (req, res, next) {
           .status(400)
           .send({ status: false, message: "address is required" });
       } else if (
-        address.street !== undefined &&
+        address.street!==undefined &&
         !hasEmptyString(address.street)
       ) {
         return res.status(400).send({
@@ -132,7 +133,7 @@ const validationForUser = async function (req, res, next) {
           message: "Street should be present with correct format",
         });
       } else if (
-        (address.city && !hasEmptyString(address.city)) ||
+        (address.city!==undefined) && (!hasEmptyString(address.city)) ||
         !stringContainNumber(address.city)
       ) {
         return res.status(400).send({
@@ -265,14 +266,12 @@ const validationForBook = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Subcategory should not be empty" });
     else {
-      let isValidsubcategory = true;
-      subcategory.forEach((sub) => {
-        isValidsubcategory &&= stringContainNumber(sub);
+       subcategory.forEach((sub) => {
+        if (!stringContainNumber(sub))
+          return res
+            .status(400)
+            .send({ status: false, message: "Subcategory is in wrong format" });
       });
-      if (!isValidsubcategory)
-        return res
-          .status(400)
-          .send({ status: false, message: "Subcategory is in wrong format" });
     }
 
     if (!releasedAt)
@@ -296,6 +295,8 @@ const validationForBook = async function (req, res, next) {
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
+
+
   next();
 };
 
@@ -442,6 +443,57 @@ const validationUpdateReview = async function (req, res, next) {
   next();
 };
 
+const awsCreate = async function(req,res,next){
+
+  let uploadFile = async (file) => {
+    return new Promise(function (resolve, reject) {
+  
+      let s3 = new aws.S3({ apiVersion: '2006-03-01' });
+  
+      var uploadParams = {
+        ACL: "public-read",
+        Bucket: "classroom-training-bucket",  //HERE
+        Key: "ankita/" + file.originalname, //HERE 
+        Body: file.buffer
+      }
+  
+  
+      s3.upload(uploadParams, function (err, data) {
+        if (err) {
+          return reject({ "error": err })
+        }
+        console.log(data)
+        console.log("file uploaded succesfully")
+        return resolve(data.Location)
+      })
+  
+  
+  
+    })
+  }
+  try {
+    // let body = req.body
+    let files = req.files
+    console.log(files)
+    if (files && files.length > 0) {
+
+      let uploadedFileURL = await uploadFile(files[0])
+      body.bookCover = uploadedFileURL
+     return  res.status(201).send({ msg: "file uploaded succesfully", data: uploadedFileURL })
+    }
+    else {
+      return res.status(400).send({ msg: "No file found" })
+    }
+
+  }
+  catch (err) {
+   return res.status(500).send({ msg: err })
+  }
+
+  next()
+
+}
+
 module.exports = {
   validationForUser,
   validationForLogin,
@@ -449,4 +501,5 @@ module.exports = {
   validationForUpdatedBook,
   validationForReview,
   validationUpdateReview,
+  awsCreate
 };

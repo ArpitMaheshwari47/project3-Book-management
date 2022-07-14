@@ -139,14 +139,14 @@ const deleteReview = async function (req, res) {
         .send({ status: false, message: "The review should be of corresponding book" });
     else if (reviewDetails.isDeleted)
       return res
-        .status(200)
+        .status(404)
         .send({ status: false, message: "The review is already deleted" });
     else {
       reviewDetails.isDeleted = true;
       reviewDetails.save();
       return res
         .status(200)
-        .send({ status: true, data: "The review is deleted" });
+        .send({ status: true, message: "The review is deleted" });
     }
   } catch (err) {
     return res.status(500).send({ status: false, msg: err.message });
