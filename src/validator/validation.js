@@ -28,7 +28,6 @@ const validationForUser = async function (req, res, next) {
   try {
     let data = req.body;
     let { title, name, phone, email, password, address } = data;
-
     let allowedTitles = ["Mr", "Mrs", "Miss"];
 
     if (!isValidObject(data))
@@ -124,7 +123,7 @@ const validationForUser = async function (req, res, next) {
           .status(400)
           .send({ status: false, message: "address is required" });
       } else if (
-        address.street !== undefined &&
+        address.street != undefined &&
         !hasEmptyString(address.street)
       ) {
         return res.status(400).send({
@@ -132,15 +131,15 @@ const validationForUser = async function (req, res, next) {
           message: "Street should be present with correct format",
         });
       } else if (
-        (address.city && !hasEmptyString(address.city)) ||
-        !stringContainNumber(address.city)
+        address.city != undefined &&
+        (!hasEmptyString(address.city) || !stringContainNumber(address.city))
       ) {
         return res.status(400).send({
           status: false,
           message: "City should be present with correct format",
         });
       } else if (
-        address.pincode &&
+        address.pincode != undefined &&
         (!hasEmptyString(address.pincode) ||
           !/^(\d{4}|\d{6})$/.test(address.pincode))
       ) {
@@ -265,16 +264,13 @@ const validationForBook = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Subcategory should not be empty" });
     else {
-      let isValidsubcategory = true;
       subcategory.forEach((sub) => {
-        isValidsubcategory &&= stringContainNumber(sub);
+        if (!stringContainNumber(sub))
+          return res
+            .status(400)
+            .send({ status: false, message: "Subcategory is in wrong format" });
       });
-      if (!isValidsubcategory)
-        return res
-          .status(400)
-          .send({ status: false, message: "Subcategory is in wrong format" });
     }
-
     if (!releasedAt)
       return res
         .status(400)
@@ -315,7 +311,6 @@ const validationForUpdatedBook = async function (req, res, next) {
         .status(400)
         .send({ status: false, message: "Title should not be empty" });
     }
-
     if (excerpt != undefined && !hasEmptyString(excerpt))
       return res
         .status(400)

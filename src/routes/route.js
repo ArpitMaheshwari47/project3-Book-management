@@ -6,12 +6,17 @@ const reviewController = require("../controllers/reviewController");
 const middlewares = require("../middlewares/auth");
 const validation = require("../validator/validation");
 
+
+// .......................................... User APIs ...................................//
 router.post(
   "/register",
   validation.validationForUser,
   userController.registerUser
 );
 
+router.post("/login", validation.validationForLogin, userController.loginUser);
+
+// .......................................... Book APIs ...................................//
 router.post(
   "/books",
   middlewares.Authentication,
@@ -19,9 +24,8 @@ router.post(
   bookController.registerBook
 );
 
-router.post("/login", validation.validationForLogin, userController.loginUser);
-
 router.get("/books", middlewares.Authentication, bookController.getBook);
+
 router.get(
   "/books/:bookId",
   middlewares.Authentication,
@@ -40,6 +44,7 @@ router.delete(
   bookController.deleteBook
 );
 
+// .......................................... Review APIs ...................................//
 router.post(
   "/books/:bookId/review",
   validation.validationForReview,

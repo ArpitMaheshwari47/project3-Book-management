@@ -3,17 +3,55 @@ const userModel = require("../models/userModel");
 const reviewModel = require("../models/reviewsmodel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const aws = require("aws-sdk");
+
+aws.config.update({
+  accessKeyId: "AKIAY3L35MCRVFM24Q7U",
+  secretAccessKey: "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",
+  region: "ap-south-1",
+});
+
+let uploadFile = async (file) => {
+  return new Promise(function (resolve, reject) {
+    let s3 = new aws.S3({ apiVersion: "2006-03-01" });
+
+    var uploadParams = {
+      ACL: "public-read",
+      Bucket: "classroom-training-bucket",
+      Key: "Ankita/" + file.originalname,
+      Body: file.buffer,
+    };
+
+    s3.upload(uploadParams, function (err, data) {
+      if (err) {
+        return reject({ error: err });
+      }
+      return resolve(data.Location);
+    });
+  });
+};
 
 // .................................. Create Book  .............................//
 const registerBook = async function (req, res) {
   try {
-    let body = req.body;
+    const data = req.body;
 
-    const user = await userModel.findById(body.userId);
+    const user = await userModel.findById(data.userId);
     if (!user)
       return res
         .status(400)
         .send({ status: false, message: "User not exists" });
+    try {
+      let files = req.files;
+      if (files && files.length > 0) {
+        let uploadedFileURL = await uploadFile(files[0]);
+        data.bookCover = uploadedFileURL;
+      } else {
+        res.status(400).send({ msg: "No file found" });
+      }
+    } catch (err) {
+      res.status(500).send({ msg: err });
+    }
 
     // authorization
     if (req.headers["userId"] !== user._id.toString())
@@ -21,7 +59,7 @@ const registerBook = async function (req, res) {
         .status(403)
         .send({ status: false, msg: "You are not authorized...." });
 
-    const book = await bookModel.create(body);
+    const book = await bookModel.create(data);
     return res
       .status(201)
       .send({ status: true, message: "Success", data: book });
@@ -42,12 +80,12 @@ const getBook = async function (req, res) {
     } else if (userId) query.userId = userId;
 
     if (category) query.category = category;
-    
+
     if (subcategory) {
       const newSubcategory = subcategory.split(",").map((ele) => ele.trim());
       query.subcategory = { $all: newSubcategory };
     }
-    
+
     let book = await bookModel
       .find(query)
       .select({
@@ -58,6 +96,7 @@ const getBook = async function (req, res) {
         createdAt: 0,
         updatedAt: 0,
       })
+      .collation({ locale: "en" })
       .sort({ title: 1 });
 
     if (book.length === 0) {
@@ -83,10 +122,10 @@ const getBooksByParams = async function (req, res) {
 
     if (!book) {
       return res.status(404).send({ status: false, message: "No book found" });
-    } else if (book.isDeleted) {
+    } else if (!book.isDeleted) {
       return res
         .status(404)
-        .send({ status: false, message: "The book is deleted" });
+        .send({ status: false, message: "Book is deleted" });
     }
 
     let reviewsData = [];
@@ -130,7 +169,6 @@ const updateBooks = async function (req, res) {
         .status(404)
         .send({ status: false, msg: "Book does not exists" });
 
-
     //authorization
     let book = await bookModel.findById({ _id: bookId });
     let userId = book.userId.toString();
@@ -158,11 +196,11 @@ const updateBooks = async function (req, res) {
 
     bookDetails.save();
 
-    res
+    return res
       .status(200)
       .send({ status: true, message: "Success", data: bookDetails });
   } catch (error) {
-    res.status(500).send({ err: error.message });
+    return res.status(500).send({ err: error.message });
   }
 };
 
@@ -177,8 +215,8 @@ const deleteBook = async function (req, res) {
 
     //authorisation
     let book = await bookModel.findById({ _id: bookId });
-    if(!book)
-    return res
+    if (!book)
+      return res
         .status(404)
         .send({ status: false, message: "Book does not exist" });
 
@@ -198,12 +236,12 @@ const deleteBook = async function (req, res) {
         .send({ status: false, message: "The book does not exist" });
     else if (deleteBook.isDeleted) {
       return res
-        .status(200)
+        .status(404)
         .send({ status: false, message: "The book is already deleted" });
     } else {
       return res
         .status(200)
-        .send({ status: true, data: "The book is deleted" });
+        .send({ status: true, message: "The book is deleted" });
     }
   } catch (err) {
     return res.status(500).send({ status: false, msg: err.message });
