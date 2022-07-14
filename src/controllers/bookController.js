@@ -5,11 +5,14 @@ const mongoose = require("mongoose");
 const aws = require("aws-sdk")
 const ObjectId = mongoose.Types.ObjectId;
 
-// aws.config.update({
-//   accessKeyId: "AKIAY3L35MCRVFM24Q7U",
-//   secretAccessKey: "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",
-//   region: "ap-south-1"
-// })
+
+aws.config.update({
+  accessKeyId: "AKIAY3L35MCRVFM24Q7U",
+  secretAccessKey: "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",
+  region: "ap-south-1",
+});
+
+
 
 let uploadFile = async (file) => {
   return new Promise(function (resolve, reject) {
@@ -38,52 +41,32 @@ let uploadFile = async (file) => {
   })
 }
 
-// router.post("/write-file-aws", async function (req, res) {
 
-//   try {
-//     let body = req.body
-//     let files = req.files
-//     if (files && files.length > 0) {
-
-//       let uploadedFileURL = await uploadFile(files[0])
-//       body.bookCover = uploadedFileURL
-//       res.status(201).send({ msg: "file uploaded succesfully", data: uploadedFileURL })
-//     }
-//     else {
-//       res.status(400).send({ msg: "No file found" })
-//     }
-
-//   }
-//   catch (err) {
-//     res.status(500).send({ msg: err })
-//   }
-
-// })
 
 
 // .................................. Create Book  .............................//
 const registerBook = async function (req, res) {
   try {
-    let data = req.body;
+    const data = req.body;
 
     const user = await userModel.findById(data.userId);
     if (!user)
       return res
         .status(400)
         .send({ status: false, message: "User not exists" });
+    try {
+      let files = req.files;
+      if (files && files.length > 0) {
+        let uploadedFileURL = await uploadFile(files[0]);
+        data.bookCover = uploadedFileURL;
+      } else {
+        res.status(400).send({ msg: "No file found" });
+      }
+    } catch (err) {
+      res.status(500).send({ msg: err });
+    }
 
-    // let files = req.files
-    // console.log(files)
-    // if (files && files.length > 0) {
-
-    //   let uploadedFileURL = await uploadFile(files[0])
-    //   // data.bookCover = uploadedFileURL
-    //   res.status(201).send({ msg: "file uploaded succesfully", data: uploadedFileURL })
-    // }
-    // else {
-    //   return res.status(400).send({ msg: "No file found" })
-    // }
-
+    
 
 
 
@@ -130,6 +113,7 @@ const getBook = async function (req, res) {
         createdAt: 0,
         updatedAt: 0,
       })
+      .collation({ locale: "en" })
       .sort({ title: 1 });
 
     if (book.length === 0) {
@@ -155,10 +139,10 @@ const getBooksByParams = async function (req, res) {
 
     if (!book) {
       return res.status(404).send({ status: false, message: "No book found" });
-    } else if (book.isDeleted) {
+    } else if (!book.isDeleted) {
       return res
         .status(404)
-        .send({ status: false, message: "The book is deleted" });
+        .send({ status: false, message: "Book is deleted" });
     }
 
     let reviewsData = [];
@@ -202,7 +186,6 @@ const updateBooks = async function (req, res) {
         .status(404)
         .send({ status: false, msg: "Book does not exists" });
 
-
     //authorization
     let book = await bookModel.findById({ _id: bookId });
     let userId = book.userId.toString();
@@ -234,7 +217,7 @@ const updateBooks = async function (req, res) {
       .status(200)
       .send({ status: true, message: "Success", data: bookDetails });
   } catch (error) {
-    res.status(500).send({ err: error.message });
+    return res.status(500).send({ err: error.message });
   }
 };
 
@@ -270,12 +253,12 @@ const deleteBook = async function (req, res) {
         .send({ status: false, message: "The book does not exist" });
     else if (deleteBook.isDeleted) {
       return res
-        .status(200)
+        .status(404)
         .send({ status: false, message: "The book is already deleted" });
     } else {
       return res
         .status(200)
-        .send({ status: true, data: "The book is deleted" });
+        .send({ status: true, message: "The book is deleted" });
     }
   } catch (err) {
     return res.status(500).send({ status: false, msg: err.message });

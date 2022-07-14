@@ -34,14 +34,16 @@ const createReviews = async function (req, res) {
 
     if (book.isDeleted)
       return res
-        .status(400)
+        .status(404)
         .send({ status: false, message: "Book is deleted" });
 
-    const bookUpdateWithReviews = await bookModel.findOneAndUpdate(
-      { _id: bookId, isDeleted: false },
-      { $inc: { reviews: 1 } },
-      { new: true }
-    ).select({__v:0});
+    const bookUpdateWithReviews = await bookModel
+      .findOneAndUpdate(
+        { _id: bookId, isDeleted: false },
+        { $inc: { reviews: 1 } },
+        { new: true }
+      )
+      .select({ __v: 0 });
     bookUpdateWithReviews.reviewsData = newReview;
 
     const reviewsDetails = {
@@ -62,16 +64,15 @@ const updateReviews = async function (req, res) {
     let bookId = req.params.bookId;
     let reviewId = req.params.reviewId;
 
-    
-
-
     let data = req.body;
     const { rating, review, reviewedBy } = data;
 
-    let bookDetails = await bookModel.findOne({
-      _id: bookId,
-      isDeleted: false,
-    }).select({__v:0});
+    let bookDetails = await bookModel
+      .findOne({
+        _id: bookId,
+        isDeleted: false,
+      })
+      .select({ __v: 0 });
 
     if (!bookDetails)
       return res.status(404).send({
@@ -79,26 +80,29 @@ const updateReviews = async function (req, res) {
         msg: "The book does not exist",
       });
 
-    let reviewDetails = await reviewModel.findOneAndUpdate(
-      { _id: reviewId, bookId: bookDetails._id.toString(), isDeleted: false },
-      { $set: { rating, review, reviewedBy } },
-      { new: true }
-    ).select({__v:0,createdAt:0,updatedAt:0,isDeleted:0});
+    let reviewDetails = await reviewModel
+      .findOneAndUpdate(
+        { _id: reviewId, bookId: bookDetails._id.toString(), isDeleted: false },
+        { $set: { rating, review, reviewedBy } },
+        { new: true }
+      )
+      .select({ __v: 0, createdAt: 0, updatedAt: 0, isDeleted: 0 });
 
     if (!reviewDetails)
-      return res
-        .status(404)
-        .send({ status: false, msg: "The review should be of corresponding book" });
+      return res.status(404).send({
+        status: false,
+        msg: "The review should be of corresponding book",
+      });
 
     const newBookDetails = {
       ...bookDetails.toJSON(),
       reviewsData: reviewDetails,
     };
-    res
+    return res
       .status(200)
       .send({ status: true, message: "Success", data: newBookDetails });
   } catch (error) {
-    res.status(500).send({ err: error.message });
+    return res.status(500).send({ err: error.message });
   }
 };
 
@@ -134,9 +138,10 @@ const deleteReview = async function (req, res) {
       bookId: bookDetails._id.toString(),
     });
     if (!reviewDetails)
-      return res
-        .status(404)
-        .send({ status: false, message: "The review should be of corresponding book" });
+      return res.status(404).send({
+        status: false,
+        message: "The review should be of corresponding book",
+      });
     else if (reviewDetails.isDeleted)
       return res
         .status(404)
